@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from "react"
+import { floydSteinbergDither } from "./utils/floydSteinbergDither"
 
 export default function Home() {
 
@@ -25,12 +26,40 @@ export default function Home() {
 
     switch (selectedAlgo) {
       case "floyd-steinberg-dither":
+        processImage();
         break;
     }
 
   }
 
+  // TODO: have this be reusable instead
+  // currently WIP
+  const [dithImage, setDithImage] = useState()
+  const processImage = async () => {
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const arrayBuffer = e.target!.result as ArrayBuffer;
+        const uint8Array = new Uint8Array(arrayBuffer);
+        
+        const img = new Image();
+        await new Promise((resolve) => {
+          img.onload = () => {
+            resolve(img);
+          };
+          img.src = URL.createObjectURL(originalImage);
+        });
 
+        const processedUint8Array = floydSteinbergDither(uint8Array, img.width, img.height);
+        
+        const blob = new Blob([processedUint8Array], {type: originalImage.type});
+        setDithImage(blob);
+      };
+      reader.readAsArrayBuffer(originalImage);
+    } catch (error) {
+      console.error("Error processing image:", error);
+    }
+  }
 
   return (
     <main className="flex flex-col min-h-screen items-center">
